@@ -109,6 +109,9 @@
   <label>기준가 (수동 입력):</label>
   <input type="number" id="basePrice" step="0.01" value="3333.33">
 
+  <label>총 손실금액 (USD):</label>
+  <input type="number" id="totalLoss" step="1" value="100">
+
   <button onclick="calculate()">🚀 계산하기</button>
 
   <div id="results" class="result" style="display: none;"></div>
@@ -116,6 +119,8 @@
   <script>
     function calculate() {
       const base = parseFloat(document.getElementById('basePrice').value);
+      const totalLoss = parseFloat(document.getElementById('totalLoss').value);
+      const pipValue = 100; // 고정: 1 lot 기준 pip가치
       const sessionList = ['asia', 'europe', 'us'];
       const sessionNames = { asia: '아시아', europe: '유럽', us: '미국' };
       const timeframes = ['1h', '10m', '5m'];
@@ -139,19 +144,26 @@
             const floorN = Math.floor(n);
             html += `<p style="margin:5px 0;">🔹 N=${n}</p>`;
             for (let i = 1; i <= floorN; i++) {
-              const offset = tr * i;
-              const longEntry = base - offset;
-              const shortEntry = base + offset;
+              const distance = tr * i;
+              const longEntry = base - distance;
+              const shortEntry = base + distance;
+
+              const sameLossLot = totalLoss / (distance * pipValue);
+              const equalLot = 1.0;
+
               html += `구간 ${i} ➤ 롱: ${longEntry.toFixed(2)} / 숏: ${shortEntry.toFixed(2)}<br>`;
+              html += `┗ 동일손실 lot: ${sameLossLot.toFixed(3)} / 차등손실 lot: ${equalLot.toFixed(2)}<br>`;
             }
-            const longSL = base - tr * n;
-            const shortSL = base + tr * n;
+
+            const slDistance = tr * n;
+            const longSL = base - slDistance;
+            const shortSL = base + slDistance;
             html += `<span style="color:red;">🛑 손절가 ➤ 롱: ${longSL.toFixed(2)} / 숏: ${shortSL.toFixed(2)}</span><br>`;
           });
 
-          html += `</div>`; // end sub-result
+          html += `</div>`;
         });
-        html += `</div>`; // end session-box
+        html += `</div>`;
       });
 
       const resultDiv = document.getElementById('results');
