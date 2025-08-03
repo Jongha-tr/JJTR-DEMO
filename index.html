@@ -3,104 +3,153 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Gold(XAUUSD) 계산기 | JJTR-DEMO</title>
+  <title>TR 기반 진입 계산기 | JJTR</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      padding: 20px;
-      max-width: 500px;
+      font-family: sans-serif;
+      max-width: 800px;
       margin: auto;
-      background-color: #fefefe;
+      padding: 20px;
+      background: #fffef7;
       color: #333;
     }
     h1 {
-      color: #c19700;
+      color: #b58900;
       text-align: center;
     }
     label {
-      display: block;
-      margin-top: 15px;
       font-weight: bold;
+      margin-top: 15px;
+      display: block;
     }
-    input {
+    input, select {
       width: 100%;
-      padding: 10px;
+      padding: 8px;
       margin-top: 5px;
-      font-size: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px;
+      text-align: center;
     }
     button {
       width: 100%;
-      padding: 12px;
       margin-top: 20px;
-      background-color: #c19700;
+      padding: 10px;
+      background: #268bd2;
       color: white;
       font-size: 1rem;
       border: none;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #a87f00;
-    }
     .result {
+      background: #f7f7f7;
+      padding: 15px;
       margin-top: 30px;
-      padding: 20px;
-      background-color: #f4f4f4;
-      border-radius: 8px;
-    }
-    .result p {
-      margin: 10px 0;
+      border-radius: 10px;
     }
   </style>
 </head>
 <body>
 
-  <h1>📈 Gold (XAUUSD) 계산기</h1>
+  <h1>📈 TR 기반 진입 구간 계산기</h1>
 
-  <label for="lotSize">Lot 수:</label>
-  <input type="number" id="lotSize" value="1" step="0.01" min="0.01">
+  <label>기준가 (수동 입력):</label>
+  <input type="number" id="basePrice" step="0.01" value="1980">
 
-  <label for="entryPrice">진입가:</label>
-  <input type="number" id="entryPrice" value="1980" step="0.01">
+  <label>포지션 방향:</label>
+  <select id="direction">
+    <option value="long">롱 (매수)</option>
+    <option value="short">숏 (매도)</option>
+  </select>
 
-  <label for="exitPrice">청산가:</label>
-  <input type="number" id="exitPrice" value="1985" step="0.01">
+  <label>N값 선택 (진입구간 수):</label>
+  <select id="nValue">
+    <option value="3.5">3.5</option>
+    <option value="5.5">5.5</option>
+  </select>
 
-  <label for="leverage">레버리지:</label>
-  <input type="number" id="leverage" value="100" step="1" min="1">
+  <h3>세션별 TR 입력</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>세션</th>
+        <th>1시간봉</th>
+        <th>10분봉</th>
+        <th>5분봉</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>아시아</td>
+        <td><input type="number" id="asia_1h" step="0.01"></td>
+        <td><input type="number" id="asia_10m" step="0.01"></td>
+        <td><input type="number" id="asia_5m" step="0.01"></td>
+      </tr>
+      <tr>
+        <td>유럽</td>
+        <td><input type="number" id="europe_1h" step="0.01"></td>
+        <td><input type="number" id="europe_10m" step="0.01"></td>
+        <td><input type="number" id="europe_5m" step="0.01"></td>
+      </tr>
+      <tr>
+        <td>미국</td>
+        <td><input type="number" id="us_1h" step="0.01"></td>
+        <td><input type="number" id="us_10m" step="0.01"></td>
+        <td><input type="number" id="us_5m" step="0.01"></td>
+      </tr>
+    </tbody>
+  </table>
 
-  <button onclick="calculate()">계산하기</button>
+  <button onclick="calculate()">🚀 계산하기</button>
 
-  <div class="result" id="result" style="display: none;">
-    <h3>📊 계산 결과</h3>
-    <p>🔸 총 pip 수: <span id="pipCount"></span> pip</p>
-    <p>🔸 손익(PnL): <span id="pnl"></span> USD</p>
-    <p>🔸 필요한 증거금: <span id="margin"></span> USD</p>
-  </div>
+  <div id="results" class="result" style="display: none;"></div>
 
   <script>
     function calculate() {
-      const lot = parseFloat(document.getElementById("lotSize").value);
-      const entry = parseFloat(document.getElementById("entryPrice").value);
-      const exit = parseFloat(document.getElementById("exitPrice").value);
-      const leverage = parseFloat(document.getElementById("leverage").value);
+      const base = parseFloat(document.getElementById('basePrice').value);
+      const direction = document.getElementById('direction').value;
+      const n = parseFloat(document.getElementById('nValue').value);
+      const floorN = Math.floor(n);
+      const sessionList = ['asia', 'europe', 'us'];
+      const timeframes = ['1h', '10m', '5m'];
 
-      const contractSize = 100; // 1 lot = 100 oz
-      const pipSize = 0.01; // 1 pip = 0.01
-      const pipValue = lot * contractSize * pipSize;
+      let html = '';
 
-      const pipCount = (exit - entry) / pipSize;
-      const pnl = pipValue * pipCount;
+      sessionList.forEach(session => {
+        html += `<h3>📌 ${session.toUpperCase()} 세션</h3>`;
+        timeframes.forEach(tf => {
+          const id = `${session}_${tf}`;
+          const tr = parseFloat(document.getElementById(id).value);
+          if (isNaN(tr)) {
+            html += `<p>⛔ ${session} ${tf} TR 값 없음</p>`;
+            return;
+          }
 
-      const positionValue = lot * contractSize * entry;
-      const margin = positionValue / leverage;
+          html += `<p><strong>📏 ${tf} TR: ${tr}</strong></p>`;
+          html += `<ul>`;
+          for (let i = 1; i <= floorN; i++) {
+            const offset = tr * i;
+            const entry = direction === 'long' ? base - offset : base + offset;
+            html += `<li>구간 ${i} 진입가: ${entry.toFixed(2)}</li>`;
+          }
+          const stopLoss = direction === 'long'
+            ? base - tr * n
+            : base + tr * n;
+          html += `<li style="color:red;">🛑 손절가: ${stopLoss.toFixed(2)}</li>`;
+          html += `</ul>`;
+        });
+      });
 
-      document.getElementById("pipCount").textContent = pipCount.toFixed(0);
-      document.getElementById("pnl").textContent = pnl.toFixed(2);
-      document.getElementById("margin").textContent = margin.toFixed(2);
-
-      document.getElementById("result").style.display = "block";
+      const resultDiv = document.getElementById('results');
+      resultDiv.innerHTML = html;
+      resultDiv.style.display = 'block';
     }
   </script>
-
 </body>
 </html>
