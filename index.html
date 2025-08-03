@@ -89,7 +89,7 @@
         <td>아시아</td>
         <td><input type="number" id="asia_1h" step="0.01"></td>
         <td><input type="number" id="asia_10m" step="0.01"></td>
-        <td><input type="number" id="asia_5m" step="0.01"></td>
+        <td><input type="number" id="asia_5m" step="0.01" value="3.16"></td>
       </tr>
       <tr>
         <td>유럽</td>
@@ -107,7 +107,7 @@
   </table>
 
   <label>기준가 (0구간 진입가):</label>
-  <input type="number" id="basePrice" step="0.01" value="3333.33">
+  <input type="number" id="basePrice" step="0.01" value="3358.49">
 
   <label>총 손실금액 (USD):</label>
   <input type="number" id="totalLoss" step="1" value="100">
@@ -120,7 +120,7 @@
     function calculate() {
       const base = parseFloat(document.getElementById('basePrice').value);
       const totalLoss = parseFloat(document.getElementById('totalLoss').value);
-      const pipValue = 100; // 고정: 1 lot = $100
+      const pipValue = 100; // 1 lot = $100
       const sessionList = ['asia', 'europe', 'us'];
       const sessionNames = { asia: '아시아', europe: '유럽', us: '미국' };
       const timeframes = ['1h', '10m', '5m'];
@@ -142,18 +142,17 @@
 
           nValues.forEach(n => {
             const floorN = Math.floor(n);
-            const stopLossDistance = tr * n;
-
             html += `<p style="margin:5px 0;">🔹 N=${n}</p>`;
+
             for (let i = 0; i <= floorN; i++) {
               const entryPrice = base - tr * i;
-              const distance = Math.abs(entryPrice - (base - tr * n)); // 기준가 기준 손절가와 거리
+              const distance = base - entryPrice;
               const lot = totalLoss / (distance * pipValue);
               html += `구간 ${i}: 진입가 ${entryPrice.toFixed(2)} ➤ 동일손실 랏: ${lot.toFixed(3)}<br>`;
             }
 
-            const stopPrice = base - tr * n;
-            html += `<span style="color:red;">🛑 손절가 (N+0.5): ${ (base - tr * (n + 0.5)).toFixed(2) }</span><br>`;
+            const stopLoss = base - tr * n;
+            html += `<span style="color:red;">🛑 손절가 (TR × N): ${stopLoss.toFixed(2)}</span><br>`;
           });
 
           html += `</div>`;
