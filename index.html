@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gold(XAUUSD) 계산기 | JJTR-DEMO</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+      background-color: #fefefe;
+      color: #333;
+    }
+    h1 {
+      color: #c19700;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 1rem;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      background-color: #c19700;
+      color: white;
+      font-size: 1rem;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #a87f00;
+    }
+    .result {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #f4f4f4;
+      border-radius: 8px;
+    }
+    .result p {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📈 Gold (XAUUSD) 계산기</h1>
+
+  <label for="lotSize">Lot 수:</label>
+  <input type="number" id="lotSize" value="1" step="0.01" min="0.01">
+
+  <label for="entryPrice">진입가:</label>
+  <input type="number" id="entryPrice" value="1980" step="0.01">
+
+  <label for="exitPrice">청산가:</label>
+  <input type="number" id="exitPrice" value="1985" step="0.01">
+
+  <label for="leverage">레버리지:</label>
+  <input type="number" id="leverage" value="100" step="1" min="1">
+
+  <button onclick="calculate()">계산하기</button>
+
+  <div class="result" id="result" style="display: none;">
+    <h3>📊 계산 결과</h3>
+    <p>🔸 총 pip 수: <span id="pipCount"></span> pip</p>
+    <p>🔸 손익(PnL): <span id="pnl"></span> USD</p>
+    <p>🔸 필요한 증거금: <span id="margin"></span> USD</p>
+  </div>
+
+  <script>
+    function calculate() {
+      const lot = parseFloat(document.getElementById("lotSize").value);
+      const entry = parseFloat(document.getElementById("entryPrice").value);
+      const exit = parseFloat(document.getElementById("exitPrice").value);
+      const leverage = parseFloat(document.getElementById("leverage").value);
+
+      const contractSize = 100; // 1 lot = 100 oz
+      const pipSize = 0.01; // 1 pip = 0.01
+      const pipValue = lot * contractSize * pipSize;
+
+      const pipCount = (exit - entry) / pipSize;
+      const pnl = pipValue * pipCount;
+
+      const positionValue = lot * contractSize * entry;
+      const margin = positionValue / leverage;
+
+      document.getElementById("pipCount").textContent = pipCount.toFixed(0);
+      document.getElementById("pnl").textContent = pnl.toFixed(2);
+      document.getElementById("margin").textContent = margin.toFixed(2);
+
+      document.getElementById("result").style.display = "block";
+    }
+  </script>
+
+</body>
+</html>
