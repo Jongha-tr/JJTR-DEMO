@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TR 기반 진입 계산기 | JJTR</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>JJTR-DEMO 계산기</title>
   <style>
     body {
       font-family: sans-serif;
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
       padding: 20px;
       background: #fffef7;
@@ -22,10 +22,11 @@
       margin-top: 15px;
       display: block;
     }
-    input, select {
+    input {
       width: 100%;
       padding: 8px;
       margin-top: 5px;
+      font-size: 1rem;
     }
     table {
       width: 100%;
@@ -48,31 +49,30 @@
       cursor: pointer;
     }
     .result {
-      background: #f7f7f7;
-      padding: 15px;
       margin-top: 30px;
+    }
+    .session-box {
+      border: 1px solid #ccc;
       border-radius: 10px;
+      padding: 15px;
+      margin-top: 20px;
+      background: #f8f8f8;
+    }
+    .session-box h3 {
+      margin-top: 0;
+      color: #444;
+    }
+    .sub-result {
+      background: #fff;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
 
-  <h1>📈 TR 기반 진입 구간 계산기</h1>
-
-  <label>기준가 (수동 입력):</label>
-  <input type="number" id="basePrice" step="0.01" value="1980">
-
-  <label>포지션 방향:</label>
-  <select id="direction">
-    <option value="long">롱 (매수)</option>
-    <option value="short">숏 (매도)</option>
-  </select>
-
-  <label>N값 선택 (진입구간 수):</label>
-  <select id="nValue">
-    <option value="3.5">3.5</option>
-    <option value="5.5">5.5</option>
-  </select>
+  <h1>📈 JJTR-DEMO 계산기</h1>
 
   <h3>세션별 TR 입력</h3>
   <table>
@@ -106,6 +106,9 @@
     </tbody>
   </table>
 
+  <label>기준가 (수동 입력):</label>
+  <input type="number" id="basePrice" step="0.01" value="3333.33">
+
   <button onclick="calculate()">🚀 계산하기</button>
 
   <div id="results" class="result" style="display: none;"></div>
@@ -113,37 +116,42 @@
   <script>
     function calculate() {
       const base = parseFloat(document.getElementById('basePrice').value);
-      const direction = document.getElementById('direction').value;
-      const n = parseFloat(document.getElementById('nValue').value);
-      const floorN = Math.floor(n);
       const sessionList = ['asia', 'europe', 'us'];
+      const sessionNames = { asia: '아시아', europe: '유럽', us: '미국' };
       const timeframes = ['1h', '10m', '5m'];
+      const nValues = [3.5, 5.5];
 
       let html = '';
 
       sessionList.forEach(session => {
-        html += `<h3>📌 ${session.toUpperCase()} 세션</h3>`;
+        html += `<div class="session-box"><h3>📌 ${sessionNames[session]} 세션</h3>`;
         timeframes.forEach(tf => {
           const id = `${session}_${tf}`;
           const tr = parseFloat(document.getElementById(id).value);
           if (isNaN(tr)) {
-            html += `<p>⛔ ${session} ${tf} TR 값 없음</p>`;
+            html += `<p>⛔ ${tf} TR 값 없음</p>`;
             return;
           }
 
-          html += `<p><strong>📏 ${tf} TR: ${tr}</strong></p>`;
-          html += `<ul>`;
-          for (let i = 1; i <= floorN; i++) {
-            const offset = tr * i;
-            const entry = direction === 'long' ? base - offset : base + offset;
-            html += `<li>구간 ${i} 진입가: ${entry.toFixed(2)}</li>`;
-          }
-          const stopLoss = direction === 'long'
-            ? base - tr * n
-            : base + tr * n;
-          html += `<li style="color:red;">🛑 손절가: ${stopLoss.toFixed(2)}</li>`;
-          html += `</ul>`;
+          html += `<div class="sub-result"><strong>📏 ${tf} TR: ${tr}</strong><br>`;
+
+          nValues.forEach(n => {
+            const floorN = Math.floor(n);
+            html += `<p style="margin:5px 0;">🔹 N=${n}</p>`;
+            for (let i = 1; i <= floorN; i++) {
+              const offset = tr * i;
+              const longEntry = base - offset;
+              const shortEntry = base + offset;
+              html += `구간 ${i} ➤ 롱: ${longEntry.toFixed(2)} / 숏: ${shortEntry.toFixed(2)}<br>`;
+            }
+            const longSL = base - tr * n;
+            const shortSL = base + tr * n;
+            html += `<span style="color:red;">🛑 손절가 ➤ 롱: ${longSL.toFixed(2)} / 숏: ${shortSL.toFixed(2)}</span><br>`;
+          });
+
+          html += `</div>`; // end sub-result
         });
+        html += `</div>`; // end session-box
       });
 
       const resultDiv = document.getElementById('results');
@@ -151,5 +159,6 @@
       resultDiv.style.display = 'block';
     }
   </script>
+
 </body>
 </html>
