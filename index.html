@@ -58,9 +58,8 @@
       const capital = parseFloat(document.getElementById("capital").value);
       const riskPercent = parseFloat(document.getElementById("riskPercent").value);
 
-      const riskAmount = (capital * riskPercent) / 100; // $ 기준 1% 손실
-      const pipValuePerLot = 100; // 골드 기준 1 lot = 100 pip = $100
-      const lotSize = (riskAmount / pipValuePerLot).toFixed(2); // 비중 lot 계산
+      const totalLoss = (capital * riskPercent) / 100; // $ 기준 손실 한도
+      const pipValuePerLot = 1; // 골드 기준 1 lot = 1 pip = $1
 
       const tbody35 = document.querySelector("#zoneTable35 tbody");
       const tbody55 = document.querySelector("#zoneTable55 tbody");
@@ -85,25 +84,35 @@
         ["손절가 (5.5 TR)", 5.5],
       ];
 
-      function renderTable(zoneArray, targetTbody) {
+      function renderTable(zoneArray, targetTbody, maxN) {
+        const activeZones = zoneArray.filter(([label]) => !label.includes("손절가"));
+        const perLoss = totalLoss / activeZones.length;
+
         zoneArray.forEach(([label, mult]) => {
           const longEntry = (basePrice - tr * mult).toFixed(2);
           const shortEntry = (basePrice + tr * mult).toFixed(2);
           const isStop = label.includes("손절가");
+
+          let lotDisplay = "";
+          if (!isStop) {
+            const distance = tr * (maxN - mult);
+            const lot = distance > 0 ? (perLoss / (distance * pipValuePerLot)).toFixed(3) : "-";
+            lotDisplay = lot;
+          }
 
           const row = document.createElement("tr");
           row.innerHTML = `
             <td class="${isStop ? 'stop-loss' : ''}">${label}</td>
             <td class="${isStop ? 'stop-loss' : ''}">${longEntry}</td>
             <td class="${isStop ? 'stop-loss' : ''}">${shortEntry}</td>
-            <td class="${isStop ? 'stop-loss' : ''}">${isStop ? '' : lotSize}</td>
+            <td class="${isStop ? 'stop-loss' : ''}">${lotDisplay}</td>
           `;
           targetTbody.appendChild(row);
         });
       }
 
-      renderTable(zones35, tbody35);
-      renderTable(zones55, tbody55);
+      renderTable(zones35, tbody35, 3.5);
+      renderTable(zones55, tbody55, 5.5);
     }
 
     // 초기 계산 실행
