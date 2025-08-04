@@ -169,7 +169,7 @@
           let lotDisplay = "";
           if (!isStop) {
             const distance = tr * (maxN - mult);
-            const lot = distance > 0 ? (perLoss / (distance * pipValuePerLot) / 100).toFixed(3) : "-";
+            const lot = distance > 0 ? (perLoss / (distance * pipValuePerLot) / 100).toFixed(2) : "-";
             lotDisplay = lot;
           }
 
