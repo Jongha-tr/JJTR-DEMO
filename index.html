@@ -10,6 +10,7 @@
     table { border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: center; }
     .stop-loss { color: red; font-weight: bold; }
+    .section-title { margin-top: 40px; font-size: 18px; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -24,7 +25,21 @@
 
   <button onclick="calculateZones()">계산하기</button>
 
-  <table id="zoneTable">
+  <div class="section-title">● 구간 1 ~ 손절가 (3.5 TR)</div>
+  <table id="zoneTable35">
+    <thead>
+      <tr>
+        <th>구간</th>
+        <th>롱 진입가</th>
+        <th>숏 진입가</th>
+        <th>비중 (lot)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="section-title">● 구간 1 ~ 손절가 (5.5 TR)</div>
+  <table id="zoneTable55">
     <thead>
       <tr>
         <th>구간</th>
@@ -43,38 +58,52 @@
       const capital = parseFloat(document.getElementById("capital").value);
       const riskPercent = parseFloat(document.getElementById("riskPercent").value);
 
-      const zones = [
+      const riskAmount = (capital * riskPercent) / 100; // $ 기준 1% 손실
+      const pipValuePerLot = 100; // 골드 기준 1 lot = 100 pip = $100
+      const lotSize = (riskAmount / pipValuePerLot).toFixed(2); // 비중 lot 계산
+
+      const tbody35 = document.querySelector("#zoneTable35 tbody");
+      const tbody55 = document.querySelector("#zoneTable55 tbody");
+      tbody35.innerHTML = "";
+      tbody55.innerHTML = "";
+
+      const zones35 = [
         ["구간 1 (0 TR)", 0],
         ["구간 2 (1 TR)", 1],
         ["구간 3 (2 TR)", 2],
         ["구간 4 (3 TR)", 3],
         ["손절가 (3.5 TR)", 3.5],
+      ];
+
+      const zones55 = [
+        ["구간 1 (0 TR)", 0],
+        ["구간 2 (1 TR)", 1],
+        ["구간 3 (2 TR)", 2],
+        ["구간 4 (3 TR)", 3],
         ["구간 5 (4 TR)", 4],
         ["구간 6 (5 TR)", 5],
         ["손절가 (5.5 TR)", 5.5],
       ];
 
-      const riskAmount = (capital * riskPercent) / 100; // $ 기준 1% 손실
-      const pipValuePerLot = 100; // 골드 기준 1 lot = 100 pip = $100
-      const lotSize = (riskAmount / pipValuePerLot).toFixed(2); // 비중 lot 계산
+      function renderTable(zoneArray, targetTbody) {
+        zoneArray.forEach(([label, mult]) => {
+          const longEntry = (basePrice - tr * mult).toFixed(2);
+          const shortEntry = (basePrice + tr * mult).toFixed(2);
+          const isStop = label.includes("손절가");
 
-      const tbody = document.querySelector("#zoneTable tbody");
-      tbody.innerHTML = "";
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td class="${isStop ? 'stop-loss' : ''}">${label}</td>
+            <td class="${isStop ? 'stop-loss' : ''}">${longEntry}</td>
+            <td class="${isStop ? 'stop-loss' : ''}">${shortEntry}</td>
+            <td class="${isStop ? 'stop-loss' : ''}">${isStop ? '' : lotSize}</td>
+          `;
+          targetTbody.appendChild(row);
+        });
+      }
 
-      zones.forEach(([label, mult]) => {
-        const longEntry = (basePrice - tr * mult).toFixed(2);
-        const shortEntry = (basePrice + tr * mult).toFixed(2);
-
-        const isStop = label.includes("손절가");
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td class="${isStop ? 'stop-loss' : ''}">${label}</td>
-          <td class="${isStop ? 'stop-loss' : ''}">${longEntry}</td>
-          <td class="${isStop ? 'stop-loss' : ''}">${shortEntry}</td>
-          <td class="${isStop ? 'stop-loss' : ''}">${isStop ? '' : lotSize}</td>
-        `;
-        tbody.appendChild(row);
-      });
+      renderTable(zones35, tbody35);
+      renderTable(zones55, tbody55);
     }
 
     // 초기 계산 실행
