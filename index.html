@@ -2,166 +2,68 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>JJTR-DEMO 계산기</title>
   <style>
-    body {
-      font-family: sans-serif;
-      max-width: 900px;
-      margin: auto;
-      padding: 20px;
-      background: #fffef7;
-      color: #333;
-    }
-    h1 {
-      color: #b58900;
-      text-align: center;
-    }
-    label {
-      font-weight: bold;
-      margin-top: 15px;
-      display: block;
-    }
-    input {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      font-size: 1rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 6px;
-      text-align: center;
-    }
-    button {
-      width: 100%;
-      margin-top: 20px;
-      padding: 10px;
-      background: #268bd2;
-      color: white;
-      font-size: 1rem;
-      border: none;
-      cursor: pointer;
-    }
-    .result {
-      margin-top: 30px;
-    }
-    .session-box {
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      padding: 15px;
-      margin-top: 20px;
-      background: #f8f8f8;
-    }
-    .session-box h3 {
-      margin-top: 0;
-      color: #444;
-    }
-    .sub-result {
-      background: #fff;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 5px;
-    }
+    body { font-family: Arial; padding: 20px; }
+    h1 { margin-bottom: 10px; }
+    input { margin: 5px; padding: 5px; }
+    table { border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: center; }
   </style>
 </head>
 <body>
+  <h1>JJTR-DEMO 계산기</h1>
 
-  <h1>📈 JJTR-DEMO 계산기</h1>
+  <label>기준가: <input type="number" id="basePrice" value="3358.49" step="0.01"></label>
+  <label>TR 값: <input type="number" id="tr" value="3.16" step="0.01"></label>
+  <button onclick="calculateZones()">계산하기</button>
 
-  <h3>세션별 TR 입력</h3>
-  <table>
+  <table id="zoneTable">
     <thead>
       <tr>
-        <th>세션</th>
-        <th>1시간봉</th>
-        <th>10분봉</th>
-        <th>5분봉</th>
+        <th>구간</th>
+        <th>롱 진입가</th>
+        <th>숏 진입가</th>
       </tr>
     </thead>
-    <tbody>
-      <tr>
-        <td>아시아</td>
-        <td><input type="number" id="asia_1h" step="0.01"></td>
-        <td><input type="number" id="asia_10m" step="0.01"></td>
-        <td><input type="number" id="asia_5m" step="0.01" value="3.16"></td>
-      </tr>
-      <tr>
-        <td>유럽</td>
-        <td><input type="number" id="europe_1h" step="0.01"></td>
-        <td><input type="number" id="europe_10m" step="0.01"></td>
-        <td><input type="number" id="europe_5m" step="0.01"></td>
-      </tr>
-      <tr>
-        <td>미국</td>
-        <td><input type="number" id="us_1h" step="0.01"></td>
-        <td><input type="number" id="us_10m" step="0.01"></td>
-        <td><input type="number" id="us_5m" step="0.01"></td>
-      </tr>
-    </tbody>
+    <tbody></tbody>
   </table>
 
-  <label>기준가 (0구간 진입가):</label>
-  <input type="number" id="basePrice" step="0.01" value="3358.49">
-
-  <button onclick="calculate()">🚀 계산하기</button>
-
-  <div id="results" class="result" style="display: none;"></div>
-
   <script>
-    function calculate() {
-      const base = parseFloat(document.getElementById('basePrice').value);
-      const pipValue = 100;
-      const totalLoss = 100; // 고정!
-      const sessionList = ['asia', 'europe', 'us'];
-      const sessionNames = { asia: '아시아', europe: '유럽', us: '미국' };
-      const timeframes = ['1h', '10m', '5m'];
-      const nValues = [3.5, 5.5];
+    function calculateZones() {
+      const basePrice = parseFloat(document.getElementById("basePrice").value);
+      const tr = parseFloat(document.getElementById("tr").value);
 
-      let html = '';
+      const zones = [
+        ["구간 1 (0 TR)", 0],
+        ["구간 2 (1 TR)", 1],
+        ["구간 3 (2 TR)", 2],
+        ["구간 4 (3 TR)", 3],
+        ["손절가 (3.5 TR)", 3.5],
+        ["구간 5 (4 TR)", 4],
+        ["구간 6 (5 TR)", 5],
+        ["손절가 (5.5 TR)", 5.5],
+      ];
 
-      sessionList.forEach(session => {
-        html += `<div class="session-box"><h3>📌 ${sessionNames[session]} 세션</h3>`;
-        timeframes.forEach(tf => {
-          const id = `${session}_${tf}`;
-          const tr = parseFloat(document.getElementById(id).value);
-          if (isNaN(tr)) {
-            html += `<p>⛔ ${tf} TR 값 없음</p>`;
-            return;
-          }
+      const tbody = document.querySelector("#zoneTable tbody");
+      tbody.innerHTML = "";
 
-          html += `<div class="sub-result"><strong>📏 ${tf} TR: ${tr}</strong><br>`;
+      zones.forEach(([label, mult]) => {
+        const longEntry = (basePrice - tr * mult).toFixed(2);
+        const shortEntry = (basePrice + tr * mult).toFixed(2);
 
-          nValues.forEach(n => {
-            const floorN = Math.floor(n);
-            html += `<p style="margin:5px 0;">🔹 N=${n}</p>`;
-
-            for (let i = 0; i <= floorN; i++) {
-              const entryPrice = base - tr * i;
-              const distance = base - entryPrice;
-              const lot = 1 / distance;
-              html += `구간 ${i}: 진입가 ${entryPrice.toFixed(2)} ➤ 동일손실 랏: ${lot.toFixed(3)}<br>`;
-            }
-
-            const stopLoss = base - tr * n;
-            html += `<span style="color:red;">🛑 손절가 (TR × N): ${stopLoss.toFixed(2)}</span><br>`;
-          });
-
-          html += `</div>`;
-        });
-        html += `</div>`;
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${label}</td>
+          <td>${longEntry}</td>
+          <td>${shortEntry}</td>
+        `;
+        tbody.appendChild(row);
       });
-
-      const resultDiv = document.getElementById('results');
-      resultDiv.innerHTML = html;
-      resultDiv.style.display = 'block';
     }
-  </script>
 
+    // 초기 계산 실행
+    calculateZones();
+  </script>
 </body>
 </html>
