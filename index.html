@@ -2,25 +2,98 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JJTR-DEMO 계산기</title>
   <style>
-    body { font-family: Arial; padding: 20px; }
-    h1 { margin-bottom: 10px; }
-    input { margin: 5px; padding: 5px; }
-    table { border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: center; }
-    .stop-loss { color: red; font-weight: bold; }
-    .section-title { margin-top: 40px; font-size: 18px; font-weight: bold; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      background-color: #f8f9fa;
+      color: #333;
+      line-height: 1.5;
+    }
+    h1 {
+      margin-bottom: 20px;
+      color: #343a40;
+      font-size: 24px;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 15px;
+      padding: 12px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .section-title {
+      margin-top: 40px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #495057;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    th, td {
+      border: 1px solid #dee2e6;
+      padding: 10px 6px;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background-color: #f1f3f5;
+      color: #212529;
+    }
+    .stop-loss {
+      color: red;
+      font-weight: bold;
+    }
+    @media (max-width: 600px) {
+      th, td {
+        font-size: 12px;
+        padding: 8px 4px;
+      }
+      h1 {
+        font-size: 20px;
+      }
+    }
   </style>
 </head>
 <body>
   <h1>JJTR-DEMO 계산기</h1>
 
   <div>
-    <label>TR 값: <input type="number" id="tr" value="3.16" step="0.01"></label><br>
-    <label>기준가: <input type="number" id="basePrice" value="3358.49" step="0.01"></label><br>
-    <label>총 자본금 ($): <input type="number" id="capital" value="10000" step="100"></label><br>
-    <label>리스크 비율 (%): <input type="number" id="riskPercent" value="1" step="0.1"></label>
+    <label>TR 값:</label>
+    <input type="number" id="tr" value="3.16" step="0.01">
+    <label>기준가:</label>
+    <input type="number" id="basePrice" value="3358.49" step="0.01">
+    <label>총 자본금 ($):</label>
+    <input type="number" id="capital" value="10000" step="100">
+    <label>리스크 비율 (%):</label>
+    <input type="number" id="riskPercent" value="1" step="0.1">
   </div>
 
   <button onclick="calculateZones()">계산하기</button>
@@ -58,8 +131,8 @@
       const capital = parseFloat(document.getElementById("capital").value);
       const riskPercent = parseFloat(document.getElementById("riskPercent").value);
 
-      const totalLoss = (capital * riskPercent) / 100; // $ 기준 손실 한도
-      const pipValuePerLot = 1; // 골드 기준 1 lot = 1 pip = $1
+      const totalLoss = (capital * riskPercent) / 100;
+      const pipValuePerLot = 1;
 
       const tbody35 = document.querySelector("#zoneTable35 tbody");
       const tbody55 = document.querySelector("#zoneTable55 tbody");
@@ -115,7 +188,6 @@
       renderTable(zones55, tbody55, 5.5);
     }
 
-    // 초기 계산 실행
     calculateZones();
   </script>
 </body>
