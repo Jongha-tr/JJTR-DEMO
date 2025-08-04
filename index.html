@@ -9,13 +9,17 @@
     input { margin: 5px; padding: 5px; }
     table { border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: center; }
+    .stop-loss { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
   <h1>JJTR-DEMO 계산기</h1>
 
-  <label>기준가: <input type="number" id="basePrice" value="3358.49" step="0.01"></label>
-  <label>TR 값: <input type="number" id="tr" value="3.16" step="0.01"></label>
+  <div>
+    <label>TR 값: <input type="number" id="tr" value="3.16" step="0.01"></label><br>
+    <label>기준가: <input type="number" id="basePrice" value="3358.49" step="0.01"></label>
+  </div>
+
   <button onclick="calculateZones()">계산하기</button>
 
   <table id="zoneTable">
@@ -54,9 +58,9 @@
 
         const row = document.createElement("tr");
         row.innerHTML = `
-          <td>${label}</td>
-          <td>${longEntry}</td>
-          <td>${shortEntry}</td>
+          <td class="${label.includes('손절가') ? 'stop-loss' : ''}">${label}</td>
+          <td class="${label.includes('손절가') ? 'stop-loss' : ''}">${longEntry}</td>
+          <td class="${label.includes('손절가') ? 'stop-loss' : ''}">${shortEntry}</td>
         `;
         tbody.appendChild(row);
       });
