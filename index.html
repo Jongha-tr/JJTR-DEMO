@@ -1,193 +1,328 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="auto">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JJTR-DEMO 계산기</title>
+  <title>JJTR-DEMO 계산기 v2</title>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 20px;
-      background-color: #f8f9fa;
-      color: #333;
-      line-height: 1.5;
+    :root{
+      --bg:#f8f9fa; --fg:#212529; --muted:#6c757d; --card:#ffffff; --border:#dee2e6; --accent:#0d6efd; --accent-2:#5c7cfa; --warning:#e03131; --table-head:#f1f3f5; --shadow:0 4px 16px rgba(0,0,0,.06);
     }
-    h1 {
-      margin-bottom: 20px;
-      color: #343a40;
-      font-size: 24px;
-      text-align: center;
+    [data-theme="dark"]:root, @media (prefers-color-scheme:dark){
+      --bg:#0f1115; --fg:#e6e6e6; --muted:#9aa0a6; --card:#151821; --border:#2a2f3a; --accent:#4c8dff; --accent-2:#7b9dff; --warning:#ff6b6b; --table-head:#1a1f2b; --shadow:0 8px 24px rgba(0,0,0,.45);
     }
-    label {
-      display: block;
-      margin: 10px 0 5px;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; padding:16px; font-family:"Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background:var(--bg); color:var(--fg);
     }
-    input {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-    button {
-      margin-top: 15px;
-      padding: 12px 20px;
-      font-size: 16px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      width: 100%;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    .section-title {
-      margin-top: 40px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #495057;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      background: white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    th, td {
-      border: 1px solid #dee2e6;
-      padding: 10px 6px;
-      text-align: center;
-      font-size: 14px;
-    }
-    th {
-      background-color: #f1f3f5;
-      color: #212529;
-    }
-    .stop-loss {
-      color: red;
-      font-weight: bold;
-    }
-    @media (max-width: 600px) {
-      th, td {
-        font-size: 12px;
-        padding: 8px 4px;
-      }
-      h1 {
-        font-size: 20px;
-      }
-    }
+    .container{max-width:980px; margin:0 auto;}
+    header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px}
+    h1{margin:0; font-size:20px; font-weight:700; letter-spacing:.2px}
+    .toolbar{display:flex; gap:8px; align-items:center}
+    .btn{appearance:none; border:1px solid var(--border); background:var(--card); color:var(--fg); padding:10px 12px; border-radius:10px; cursor:pointer; font-size:14px; box-shadow:var(--shadow); transition:transform .05s ease}
+    .btn:hover{border-color:var(--accent)}
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{background:linear-gradient(180deg, var(--accent), var(--accent-2)); color:white; border:none}
+    .btn.ghost{background:transparent}
+
+    .card{background:var(--card); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); padding:16px}
+    .grid{display:grid; grid-template-columns:repeat(6,1fr); gap:12px}
+    .grid .field{grid-column:span 3}
+    @media (max-width:720px){ .grid{grid-template-columns:repeat(2,1fr)} .grid .field{grid-column:span 2} }
+
+    label{display:block; font-size:12px; color:var(--muted); margin:0 0 6px 4px}
+    input, select{width:100%; padding:12px; border-radius:12px; border:1px solid var(--border); background:var(--bg); color:var(--fg); font-size:14px}
+    input:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in oklab, var(--accent) 25%, transparent)}
+
+    .section-title{margin:22px 0 8px; font-size:15px; font-weight:700; color:var(--muted)}
+
+    table{width:100%; border-collapse:collapse; border-radius:12px; overflow:hidden; background:var(--card); box-shadow:var(--shadow)}
+    th,td{border-bottom:1px solid var(--border); padding:10px 8px; text-align:center; font-size:13px}
+    thead th{position:sticky; top:0; background:var(--table-head); color:var(--fg); z-index:1}
+    tbody tr:hover{background:color-mix(in oklab, var(--accent) 10%, transparent)}
+    .stop-loss{color:var(--warning); font-weight:700}
+
+    .actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+
+    .summary{display:flex; gap:16px; flex-wrap:wrap; margin-top:8px; color:var(--muted); font-size:13px}
+    .pill{padding:6px 10px; border:1px solid var(--border); border-radius:999px; background:var(--bg); color:var(--fg)}
+
+    .hint{font-size:12px; color:var(--muted); margin-top:8px}
   </style>
 </head>
 <body>
-  <h1>JJTR-DEMO 계산기</h1>
+  <div class="container">
+    <header>
+      <h1>JJTR-DEMO 계산기 v2</h1>
+      <div class="toolbar">
+        <button class="btn" id="themeToggle" title="라이트/다크 전환">🌓</button>
+        <button class="btn" id="resetBtn" title="입력값 초기화">↺ 초기화</button>
+      </div>
+    </header>
 
-  <div>
-    <label>TR 값:</label>
-    <input type="number" id="tr" value="3.16" step="0.01">
-    <label>기준가:</label>
-    <input type="number" id="basePrice" value="3358.49" step="0.01">
-    <label>총 자본금 ($):</label>
-    <input type="number" id="capital" value="10000" step="100">
-    <label>리스크 비율 (%):</label>
-    <input type="number" id="riskPercent" value="1" step="0.1">
+    <div class="card">
+      <div class="grid">
+        <div class="field"><label>TR 값 (달러)</label><input type="number" id="tr" value="3.16" step="0.01" inputmode="decimal"></div>
+        <div class="field"><label>기준가</label><input type="number" id="basePrice" value="3358.49" step="0.01" inputmode="decimal"></div>
+        <div class="field"><label>총 자본금 ($)</label><input type="number" id="capital" value="10000" step="100" inputmode="numeric"></div>
+        <div class="field"><label>리스크 비율 (%)</label><input type="number" id="riskPercent" value="1" step="0.1" inputmode="decimal"></div>
+        <div class="field"><label>1 lot 가 $1 움직일 때 손익 ($)</label><input type="number" id="dollarsPer1USDMove" value="100" step="1" inputmode="numeric"></div>
+        <div class="field"><label>손절 구간 N</label>
+          <select id="nPreset">
+            <option value="both" selected>3.5 & 5.5 모두</option>
+            <option value="3.5">3.5만</option>
+            <option value="5.5">5.5만</option>
+            <option value="custom">사용자 지정</option>
+          </select>
+        </div>
+        <div class="field" id="customNWrap" style="display:none"><label>사용자 지정 N (예: 4.5)</label><input type="number" id="customN" step="0.5" min="1" value="4.5"></div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="calcBtn">계산하기</button>
+        <button class="btn" id="saveBtn">입력 저장</button>
+      </div>
+      <div class="hint">동일손실 방식: 각 구간의 손절까지 거리($) × <b>1 lot의 $1당 손익</b> = 포지션당 손실. 총 손실(자본×리스크%)을 구간 수로 나누어 동일하게 배분합니다.</div>
+    </div>
+
+    <div id="tableWrap35" class="section" style="display:none">
+      <div class="section-title">● 구간 1 ~ 손절가 (<span id="label35">3.5</span> TR)</div>
+      <table id="zoneTable35">
+        <thead>
+          <tr>
+            <th>구간</th>
+            <th>롱 진입가</th>
+            <th>숏 진입가</th>
+            <th>비중 (lot)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="summary" id="summary35" aria-live="polite"></div>
+      <div class="actions">
+        <button class="btn" data-export="zoneTable35">CSV로 내보내기</button>
+        <button class="btn" data-copy="zoneTable35">복사</button>
+      </div>
+    </div>
+
+    <div id="tableWrap55" class="section" style="display:none">
+      <div class="section-title">● 구간 1 ~ 손절가 (<span id="label55">5.5</span> TR)</div>
+      <table id="zoneTable55">
+        <thead>
+          <tr>
+            <th>구간</th>
+            <th>롱 진입가</th>
+            <th>숏 진입가</th>
+            <th>비중 (lot)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="summary" id="summary55" aria-live="polite"></div>
+      <div class="actions">
+        <button class="btn" data-export="zoneTable55">CSV로 내보내기</button>
+        <button class="btn" data-copy="zoneTable55">복사</button>
+      </div>
+    </div>
   </div>
 
-  <button onclick="calculateZones()">계산하기</button>
-
-  <div class="section-title">● 구간 1 ~ 손절가 (3.5 TR)</div>
-  <table id="zoneTable35">
-    <thead>
-      <tr>
-        <th>구간</th>
-        <th>롱 진입가</th>
-        <th>숏 진입가</th>
-        <th>비중 (lot)</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <div class="section-title">● 구간 1 ~ 손절가 (5.5 TR)</div>
-  <table id="zoneTable55">
-    <thead>
-      <tr>
-        <th>구간</th>
-        <th>롱 진입가</th>
-        <th>숏 진입가</th>
-        <th>비중 (lot)</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
   <script>
-    function calculateZones() {
-      const basePrice = parseFloat(document.getElementById("basePrice").value);
-      const tr = parseFloat(document.getElementById("tr").value);
-      const capital = parseFloat(document.getElementById("capital").value);
-      const riskPercent = parseFloat(document.getElementById("riskPercent").value);
+    const els = {
+      tr: document.getElementById('tr'),
+      basePrice: document.getElementById('basePrice'),
+      capital: document.getElementById('capital'),
+      riskPercent: document.getElementById('riskPercent'),
+      dollarsPer1USDMove: document.getElementById('dollarsPer1USDMove'),
+      nPreset: document.getElementById('nPreset'),
+      customNWrap: document.getElementById('customNWrap'),
+      customN: document.getElementById('customN'),
+      calcBtn: document.getElementById('calcBtn'),
+      saveBtn: document.getElementById('saveBtn'),
+      tableWrap35: document.getElementById('tableWrap35'),
+      tableWrap55: document.getElementById('tableWrap55'),
+      table35: document.querySelector('#zoneTable35 tbody'),
+      table55: document.querySelector('#zoneTable55 tbody'),
+      summary35: document.getElementById('summary35'),
+      summary55: document.getElementById('summary55'),
+      label35: document.getElementById('label35'),
+      label55: document.getElementById('label55'),
+      themeToggle: document.getElementById('themeToggle'),
+      resetBtn: document.getElementById('resetBtn')
+    };
 
-      const totalLoss = (capital * riskPercent) / 100;
-      const pipValuePerLot = 1;
+    const fmt2 = (n) => (isFinite(n) ? Number(n).toFixed(2) : '-');
 
-      const tbody35 = document.querySelector("#zoneTable35 tbody");
-      const tbody55 = document.querySelector("#zoneTable55 tbody");
-      tbody35.innerHTML = "";
-      tbody55.innerHTML = "";
+    // Theme
+    function getTheme(){
+      const t = localStorage.getItem('jjtr_theme');
+      return t || 'auto';
+    }
+    function applyTheme(t){
+      document.documentElement.setAttribute('data-theme', t === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : t);
+      localStorage.setItem('jjtr_theme', t);
+    }
+    els.themeToggle.addEventListener('click', ()=>{
+      const cur = getTheme();
+      const next = cur === 'light' ? 'dark' : cur === 'dark' ? 'auto' : 'light';
+      applyTheme(next);
+    });
+    applyTheme(getTheme());
 
-      const zones35 = [
-        ["구간 1 (0 TR)", 0],
-        ["구간 2 (1 TR)", 1],
-        ["구간 3 (2 TR)", 2],
-        ["구간 4 (3 TR)", 3],
-        ["손절가 (3.5 TR)", 3.5],
-      ];
+    // Preset handling
+    els.nPreset.addEventListener('change', ()=>{
+      els.customNWrap.style.display = els.nPreset.value === 'custom' ? '' : 'none';
+    });
 
-      const zones55 = [
-        ["구간 1 (0 TR)", 0],
-        ["구간 2 (1 TR)", 1],
-        ["구간 3 (2 TR)", 2],
-        ["구간 4 (3 TR)", 3],
-        ["구간 5 (4 TR)", 4],
-        ["구간 6 (5 TR)", 5],
-        ["손절가 (5.5 TR)", 5.5],
-      ];
+    // Storage
+    function saveInputs(){
+      const data = {
+        tr: els.tr.value, basePrice: els.basePrice.value, capital: els.capital.value,
+        riskPercent: els.riskPercent.value, dollarsPer1USDMove: els.dollarsPer1USDMove.value,
+        nPreset: els.nPreset.value, customN: els.customN.value
+      };
+      localStorage.setItem('jjtr_inputs', JSON.stringify(data));
+    }
+    function loadInputs(){
+      try{
+        const data = JSON.parse(localStorage.getItem('jjtr_inputs'));
+        if(!data) return;
+        Object.entries(data).forEach(([k,v])=>{ if(els[k]) els[k].value = v; });
+        els.customNWrap.style.display = els.nPreset.value === 'custom' ? '' : 'none';
+      }catch(e){/* ignore */}
+    }
+    loadInputs();
 
-      function renderTable(zoneArray, targetTbody, maxN) {
-        const activeZones = zoneArray.filter(([label]) => !label.includes("손절가"));
-        const perLoss = totalLoss / activeZones.length;
+    els.saveBtn.addEventListener('click', ()=>{ saveInputs(); alert('입력값을 저장했어요.'); });
+    els.resetBtn.addEventListener('click', ()=>{ localStorage.removeItem('jjtr_inputs'); location.reload(); });
 
-        zoneArray.forEach(([label, mult]) => {
-          const longEntry = (basePrice - tr * mult).toFixed(2);
-          const shortEntry = (basePrice + tr * mult).toFixed(2);
-          const isStop = label.includes("손절가");
+    // CSV / Copy helpers
+    function tableToArray(tableId){
+      const table = document.getElementById(tableId);
+      const rows = [...table.querySelectorAll('tr')];
+      return rows.map(r=>[...r.children].map(td=>td.innerText));
+    }
+    function downloadCSV(filename, data){
+      const csv = data.map(r=>r.map(cell => {
+        const c = String(cell).replaceAll('"','""');
+        return /[",\n]/.test(c) ? `"${c}"` : c;
+      }).join(',')).join('\n');
+      const blob = new Blob(["\ufeff"+csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
+    }
+    document.querySelectorAll('[data-export]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.getAttribute('data-export');
+        const data = tableToArray(id);
+        downloadCSV(`${id}_${new Date().toISOString().slice(0,19).replaceAll(':','-')}.csv`, data);
+      });
+    });
+    document.querySelectorAll('[data-copy]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const id = btn.getAttribute('data-copy');
+        const data = tableToArray(id);
+        const tsv = data.map(r=>r.join('\t')).join('\n');
+        await navigator.clipboard.writeText(tsv);
+        btn.textContent = '복사됨 ✅'; setTimeout(()=>btn.textContent='복사',1200);
+      });
+    });
 
-          let lotDisplay = "";
-          if (!isStop) {
-            const distance = tr * (maxN - mult);
-            const lot = distance > 0 ? (perLoss / (distance * pipValuePerLot) / 100).toFixed(2) : "-";
-            lotDisplay = lot;
-          }
-
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td class="${isStop ? 'stop-loss' : ''}">${label}</td>
-            <td class="${isStop ? 'stop-loss' : ''}">${longEntry}</td>
-            <td class="${isStop ? 'stop-loss' : ''}">${shortEntry}</td>
-            <td class="${isStop ? 'stop-loss' : ''}">${lotDisplay}</td>
-          `;
-          targetTbody.appendChild(row);
-        });
+    // Core calculation
+    function calculateZones(){
+      const basePrice = parseFloat(els.basePrice.value);
+      const tr = parseFloat(els.tr.value);
+      const capital = parseFloat(els.capital.value);
+      const riskPercent = parseFloat(els.riskPercent.value);
+      const dpum = parseFloat(els.dollarsPer1USDMove.value); // $ PnL per 1 lot per $1 move
+      if([basePrice,tr,capital,riskPercent,dpum].some(v=>!isFinite(v) || v<=0)){
+        alert('입력값을 확인해주세요. 모든 값은 양수여야 합니다.');
+        return;
       }
 
-      renderTable(zones35, tbody35, 3.5);
-      renderTable(zones55, tbody55, 5.5);
+      const totalLoss = (capital * riskPercent) / 100; // 총 허용 손실$
+
+      const presets = [];
+      const choice = els.nPreset.value;
+      if(choice === '3.5' || choice === 'both') presets.push(3.5);
+      if(choice === '5.5' || choice === 'both') presets.push(5.5);
+      if(choice === 'custom') presets.push(parseFloat(els.customN.value));
+
+      // Clear
+      els.table35.innerHTML = ''; els.table55.innerHTML = '';
+      els.tableWrap35.style.display = 'none'; els.tableWrap55.style.display = 'none';
+
+      function buildZones(maxN){
+        const arr = [];
+        const maxInt = Math.floor(maxN);
+        for(let i=0;i<=maxInt;i++){
+          arr.push([`구간 ${i+1} (${i} TR)`, i, false]);
+        }
+        arr.push([`손절가 (${fmt2(maxN)} TR)`, maxN, true]);
+        return arr;
+      }
+
+      function render(tableBodyEl, summaryEl, maxN){
+        const zones = buildZones(maxN);
+        const active = zones.filter(z=>!z[2]);
+        const perLoss = totalLoss / active.length;
+        let sumLots = 0;
+        const stopLong = basePrice - tr*maxN;
+        const stopShort = basePrice + tr*maxN;
+
+        zones.forEach(([label, mult, isStop])=>{
+          const longEntry = isStop ? stopLong : (basePrice - tr*mult);
+          const shortEntry = isStop ? stopShort : (basePrice + tr*mult);
+
+          let lots = '';
+          if(!isStop){
+            const distance = tr * (maxN - mult); // $ move from entry to stop
+            const lot = distance>0 ? (perLoss / (distance * dpum)) : 0;
+            sumLots += lot;
+            lots = fmt2(lot);
+          }
+
+          const trEl = document.createElement('tr');
+          trEl.innerHTML = `
+            <td class="${isStop ? 'stop-loss' : ''}">${label}</td>
+            <td class="${isStop ? 'stop-loss' : ''}">${fmt2(longEntry)}</td>
+            <td class="${isStop ? 'stop-loss' : ''}">${fmt2(shortEntry)}</td>
+            <td class="${isStop ? 'stop-loss' : ''}">${isStop? '' : lots}</td>
+          `;
+          tableBodyEl.appendChild(trEl);
+        });
+
+        summaryEl.innerHTML = `
+          <span class="pill">총 허용손실: $${fmt2(totalLoss)}</span>
+          <span class="pill">구간 수: ${active.length}개</span>
+          <span class="pill">총 비중(합계): ${fmt2(sumLots)} lot</span>
+          <span class="pill">손절가(롱): ${fmt2(stopLong)}</span>
+          <span class="pill">손절가(숏): ${fmt2(stopShort)}</span>
+        `;
+      }
+
+      presets.forEach(N=>{
+        if(!isFinite(N) || N<=0){ return; }
+        if(N === 3.5){
+          document.getElementById('label35').textContent = '3.5';
+          els.tableWrap35.style.display = '';
+          render(els.table35, els.summary35, 3.5);
+        } else if(N === 5.5){
+          document.getElementById('label55').textContent = '5.5';
+          els.tableWrap55.style.display = '';
+          render(els.table55, els.summary55, 5.5);
+        } else {
+          // For custom N, reuse tableWrap35 dynamically to avoid creating more tables
+          document.getElementById('label35').textContent = String(N);
+          els.tableWrap35.style.display = '';
+          els.table35.innerHTML = '';
+          render(els.table35, els.summary35, N);
+        }
+      });
     }
 
+    els.calcBtn.addEventListener('click', ()=>{ calculateZones(); });
+
+    // auto-calc on load
     calculateZones();
   </script>
 </body>
