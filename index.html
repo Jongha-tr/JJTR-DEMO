@@ -45,13 +45,13 @@
 
     <div class="card">
       <div class="grid">
-        <div class="field"><label>TR 값 (달러)</label><input type="number" id="tr" value="3.16" step="0.01"></div>
-        <div class="field"><label>기준가</label><input type="number" id="basePrice" value="3358.49" step="0.01"></div>
-        <div class="field"><label>총 자본금 ($)</label><input type="number" id="capital" value="10000" step="100"></div>
-        <div class="field"><label>리스크 비율 (%)</label><input type="number" id="riskPercent" value="1" step="0.1"></div>
-        <div class="field"><label>1 lot $1 움직임 손익 ($)</label><input type="number" id="dollarsPer1USDMove" value="100" step="1"></div>
+        <div class="field"><label>TR 입력</label><input type="number" id="tr" value="3.55" step="0.01"></div>
+        <div class="field"><label>기준가</label><input type="number" id="basePrice" value="3360.55" step="0.01"></div>
+        <div class="field"><label>총 자본금($)</label><input type="number" id="capital" value="25000" step="100"></div>
+        <div class="field"><label>리스크(%)</label><input type="number" id="riskPercent" value="7" step="0.1"></div>
+        <div class="field"><label>1 lot $1 움직임 손익($)</label><input type="number" id="dollarsPer1USDMove" value="100" step="1"></div>
         <div class="field">
-          <label>손절 구간 N 프리셋</label>
+          <label>구간 N</label>
           <select id="nPreset">
             <option value="both" selected>3.5 & 5.5 모두</option>
             <option value="3.5">3.5만</option>
@@ -161,13 +161,12 @@
         let sumLots=0;
 
         const stopLong = base - trv*N; // 손절가(롱)
-        const stopShort = base + trv*N; // 손절가(숏)
         const zone1Long = base - trv*0; // 구간1(0TR) 롱 진입가 = 기준가
         const zoneDiff = Math.abs(stopLong - zone1Long); // 구간폭
 
         rows.forEach(([label,mult,isStop])=>{
           const longE = isStop ? stopLong : (base - trv*mult);
-          const shortE = isStop ? stopShort : (base + trv*mult);
+          const shortE = isStop ? (base + trv*N) : (base + trv*mult);
 
           let lots='';
           if(!isStop){
@@ -216,7 +215,6 @@
     }
 
     document.getElementById('calcBtn').addEventListener('click', calculateZones);
-    // 최초 자동 계산
     calculateZones();
   </script>
 </body>
