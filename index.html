@@ -117,9 +117,36 @@
     });
     applyTheme(getTheme());
 
+    // ===== Persistence (save/load) =====
+    const STORAGE_KEY='jjtr_inputs';
+    const FIELDS=['tr','basePrice','capital','riskPercent','dollarsPer1USDMove','nPreset','customN'];
+
+    function saveInputs(){
+      const data={};
+      FIELDS.forEach(k=>{ const el=els[k]; if(el) data[k]=el.value; });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+    function loadInputs(){
+      try{
+        const raw=localStorage.getItem(STORAGE_KEY);
+        if(!raw) return;
+        const data=JSON.parse(raw);
+        FIELDS.forEach(k=>{ if(els[k] && data[k]!==undefined) els[k].value=data[k]; });
+        els.customNWrap.style.display = els.nPreset.value==='custom' ? '' : 'none';
+      }catch(e){ /* ignore parse errors */ }
+    }
+
     // Preset UI
     els.nPreset.addEventListener('change',()=>{
       els.customNWrap.style.display = els.nPreset.value==='custom' ? '' : 'none';
+      saveInputs();
+      calculateZones();
+    });
+
+    // Auto-calc on input changes (and persist)
+    ['tr','basePrice','capital','riskPercent','dollarsPer1USDMove','customN'].forEach(id=>{
+      els[id].addEventListener('input', ()=>{ saveInputs(); calculateZones(); });
+      els[id].addEventListener('change', ()=>{ saveInputs(); calculateZones(); });
     });
 
     function calculateZones(){
@@ -129,7 +156,7 @@
       const risk=parseFloat(els.riskPercent.value);
       const dpum=parseFloat(els.dollarsPer1USDMove.value);
       if([base,trv,cap,risk,dpum].some(v=>!isFinite(v)||v<=0)){
-        alert('입력값을 확인해주세요. 모든 값은 양수여야 합니다.');
+        // 유효하지 않은 입력은 렌더링을 건너뜀
         return;
       }
 
@@ -161,7 +188,7 @@
         let sumLots=0;
 
         const stopLong = base - trv*N; // 손절가(롱)
-        const zone1Long = base - trv*0; // 구간1(0TR) 롱 진입가 = 기준가
+        const zone1Long = base - trv*0; // 기준가
         const zoneDiff = Math.abs(stopLong - zone1Long); // 구간폭
 
         rows.forEach(([label,mult,isStop])=>{
@@ -204,7 +231,6 @@
           els.tableWrap55.style.display='';
           render(els.table55, els.summary55, 5.5);
         } else {
-          // custom: 재사용 (tableWrap35에 렌더)
           els.label35.textContent=String(N);
           els.tableWrap35.style.display='';
           els.table35.innerHTML='';
@@ -214,8 +240,12 @@
       });
     }
 
-    document.getElementById('calcBtn').addEventListener('click', calculateZones);
+    // 초기 로드: 저장값 불러오고 계산
+    loadInputs();
     calculateZones();
+
+    // 버튼으로도 수동 계산 가능
+    document.getElementById('calcBtn').addEventListener('click', ()=>{ saveInputs(); calculateZones(); });
   </script>
 </body>
 </html>
