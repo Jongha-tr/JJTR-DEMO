@@ -42,6 +42,7 @@
         <button class="btn" id="themeToggle">🌓</button>
       </div>
     </header>
+
     <div class="card">
       <div class="grid">
         <div class="field"><label>TR 값 (달러)</label><input type="number" id="tr" value="3.16" step="0.01"></div>
@@ -49,44 +50,173 @@
         <div class="field"><label>총 자본금 ($)</label><input type="number" id="capital" value="10000" step="100"></div>
         <div class="field"><label>리스크 비율 (%)</label><input type="number" id="riskPercent" value="1" step="0.1"></div>
         <div class="field"><label>1 lot $1 움직임 손익 ($)</label><input type="number" id="dollarsPer1USDMove" value="100" step="1"></div>
+        <div class="field">
+          <label>손절 구간 N 프리셋</label>
+          <select id="nPreset">
+            <option value="both" selected>3.5 & 5.5 모두</option>
+            <option value="3.5">3.5만</option>
+            <option value="5.5">5.5만</option>
+            <option value="custom">사용자 지정</option>
+          </select>
+        </div>
+        <div class="field" id="customNWrap" style="display:none">
+          <label>사용자 지정 N (예: 4.5)</label>
+          <input type="number" id="customN" step="0.5" min="1" value="4.5">
+        </div>
       </div>
       <button class="btn primary" id="calcBtn">계산하기</button>
     </div>
+
     <div id="tableWrap35" class="section" style="display:none">
-      <div class="section-title">● 구간 1 ~ 손절가 (3.5 TR)</div>
+      <div class="section-title">● 구간 1 ~ 손절가 (<span id="label35">3.5</span> TR)</div>
       <table id="zoneTable35"><thead><tr><th>구간</th><th>롱 진입가</th><th>숏 진입가</th><th>비중 (lot)</th></tr></thead><tbody></tbody></table>
       <div class="summary" id="summary35"></div>
     </div>
+
     <div id="tableWrap55" class="section" style="display:none">
-      <div class="section-title">● 구간 1 ~ 손절가 (5.5 TR)</div>
+      <div class="section-title">● 구간 1 ~ 손절가 (<span id="label55">5.5</span> TR)</div>
       <table id="zoneTable55"><thead><tr><th>구간</th><th>롱 진입가</th><th>숏 진입가</th><th>비중 (lot)</th></tr></thead><tbody></tbody></table>
       <div class="summary" id="summary55"></div>
     </div>
   </div>
+
   <script>
-    const els={tr:tr,basePrice:basePrice,capital:capital,riskPercent:riskPercent,dollarsPer1USDMove:dollarsPer1USDMove,calcBtn:calcBtn,table35:zoneTable35.querySelector('tbody'),table55:zoneTable55.querySelector('tbody'),summary35:summary35,summary55:summary55,tableWrap35:tableWrap35,tableWrap55:tableWrap55};
+    const els={
+      tr:document.getElementById('tr'),
+      basePrice:document.getElementById('basePrice'),
+      capital:document.getElementById('capital'),
+      riskPercent:document.getElementById('riskPercent'),
+      dollarsPer1USDMove:document.getElementById('dollarsPer1USDMove'),
+      nPreset:document.getElementById('nPreset'),
+      customNWrap:document.getElementById('customNWrap'),
+      customN:document.getElementById('customN'),
+      calcBtn:document.getElementById('calcBtn'),
+      tableWrap35:document.getElementById('tableWrap35'),
+      tableWrap55:document.getElementById('tableWrap55'),
+      table35:document.querySelector('#zoneTable35 tbody'),
+      table55:document.querySelector('#zoneTable55 tbody'),
+      summary35:document.getElementById('summary35'),
+      summary55:document.getElementById('summary55'),
+      label35:document.getElementById('label35'),
+      label55:document.getElementById('label55'),
+      themeToggle:document.getElementById('themeToggle')
+    };
+
     const fmt2=n=>Number(n).toFixed(2);
-    function calculateZones(){
-      const base=parseFloat(els.basePrice.value),trv=parseFloat(els.tr.value),cap=parseFloat(els.capital.value),risk=parseFloat(els.riskPercent.value),dpum=parseFloat(els.dollarsPer1USDMove.value);
-      const totalLoss=(cap*risk)/100;
-      const presets=[3.5,5.5];
-      els.table35.innerHTML='';els.table55.innerHTML='';
-      function build(N){
-        const zones=[];for(let i=0;i<=Math.floor(N);i++){zones.push([`구간 ${i+1} (${i} TR)`,i,false]);}zones.push([`손절가 (${fmt2(N)} TR)`,N,true]);return zones;
-      }
-      function render(tbody,summary,N){
-        const zones=build(N),active=zones.filter(z=>!z[2]),perLoss=totalLoss/active.length;let sumLots=0;
-        const stopLong=base-trv*N;const zone1Long=base-trv*0;const zoneDiff=Math.abs(stopLong-zone1Long);
-        zones.forEach(([label,mult,isStop])=>{
-          const longE=isStop?stopLong:(base-trv*mult);const shortE=isStop?(base+trv*N):(base+trv*mult);
-          let lot='';if(!isStop){const dist=trv*(N-mult);const l=perLoss/(dist*dpum);sumLots+=l;lot=fmt2(l);}
-          tbody.innerHTML+=`<tr><td class="${isStop?'stop-loss':''}">${label}</td><td class="${isStop?'stop-loss':''}">${fmt2(longE)}</td><td class="${isStop?'stop-loss':''}">${fmt2(shortE)}</td><td class="${isStop?'stop-loss':''}">${isStop?'':lot}</td></tr>`;
-        });
-        summary.innerHTML=`<span class="pill">총 허용손실: $${fmt2(totalLoss)}</span><span class="pill">총 비중(합계): ${fmt2(sumLots)} lot</span><span class="pill">구간폭: ${fmt2(zoneDiff)}</span>`;
-      }
-      presets.forEach(N=>{if(N===3.5){els.tableWrap35.style.display='';render(els.table35,els.summary35,N);}else{els.tableWrap55.style.display='';render(els.table55,els.summary55,N);}});
+
+    // Theme toggle
+    function getTheme(){return localStorage.getItem('jjtr_theme')||'auto';}
+    function applyTheme(t){
+      document.documentElement.setAttribute('data-theme', t==='auto'? (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light') : t);
+      localStorage.setItem('jjtr_theme', t);
     }
-    els.calcBtn.addEventListener('click',calculateZones);
+    els.themeToggle.addEventListener('click',()=>{
+      const cur=getTheme();
+      const next=cur==='light'?'dark':cur==='dark'?'auto':'light';
+      applyTheme(next);
+    });
+    applyTheme(getTheme());
+
+    // Preset UI
+    els.nPreset.addEventListener('change',()=>{
+      els.customNWrap.style.display = els.nPreset.value==='custom' ? '' : 'none';
+    });
+
+    function calculateZones(){
+      const base=parseFloat(els.basePrice.value);
+      const trv=parseFloat(els.tr.value);
+      const cap=parseFloat(els.capital.value);
+      const risk=parseFloat(els.riskPercent.value);
+      const dpum=parseFloat(els.dollarsPer1USDMove.value);
+      if([base,trv,cap,risk,dpum].some(v=>!isFinite(v)||v<=0)){
+        alert('입력값을 확인해주세요. 모든 값은 양수여야 합니다.');
+        return;
+      }
+
+      const totalLoss=(cap*risk)/100;
+
+      // Determine which N values to render
+      const choice=els.nPreset.value;
+      const presets=[];
+      if(choice==='both' || choice==='3.5') presets.push(3.5);
+      if(choice==='both' || choice==='5.5') presets.push(5.5);
+      if(choice==='custom') presets.push(parseFloat(els.customN.value));
+
+      // reset views
+      els.table35.innerHTML=''; els.table55.innerHTML='';
+      els.summary35.innerHTML=''; els.summary55.innerHTML='';
+      els.tableWrap35.style.display='none'; els.tableWrap55.style.display='none';
+
+      function build(N){
+        const rows=[]; const maxInt=Math.floor(N);
+        for(let i=0;i<=maxInt;i++){ rows.push([`구간 ${i+1} (${i} TR)`, i, false]); }
+        rows.push([`손절가 (${fmt2(N)} TR)`, N, true]);
+        return rows;
+      }
+
+      function render(targetTbody, targetSummary, N){
+        const rows=build(N);
+        const active=rows.filter(r=>!r[2]);
+        const perLoss=totalLoss/active.length;
+        let sumLots=0;
+
+        const stopLong = base - trv*N; // 손절가(롱)
+        const stopShort = base + trv*N; // 손절가(숏)
+        const zone1Long = base - trv*0; // 구간1(0TR) 롱 진입가 = 기준가
+        const zoneDiff = Math.abs(stopLong - zone1Long); // 구간폭
+
+        rows.forEach(([label,mult,isStop])=>{
+          const longE = isStop ? stopLong : (base - trv*mult);
+          const shortE = isStop ? stopShort : (base + trv*mult);
+
+          let lots='';
+          if(!isStop){
+            const distance = trv*(N - mult); // $ from entry to stop
+            const l = perLoss / (distance * dpum);
+            sumLots += l;
+            lots = fmt2(l);
+          }
+
+          const trEl=document.createElement('tr');
+          trEl.innerHTML = `
+            <td class="${isStop?'stop-loss':''}">${label}</td>
+            <td class="${isStop?'stop-loss':''}">${fmt2(longE)}</td>
+            <td class="${isStop?'stop-loss':''}">${fmt2(shortE)}</td>
+            <td class="${isStop?'stop-loss':''}">${isStop? '' : lots}</td>
+          `;
+          targetTbody.appendChild(trEl);
+        });
+
+        targetSummary.innerHTML = `
+          <span class="pill">총 허용손실: $${fmt2(totalLoss)}</span>
+          <span class="pill">총 비중(합계): ${fmt2(sumLots)} lot</span>
+          <span class="pill">구간폭: ${fmt2(zoneDiff)}</span>
+        `;
+      }
+
+      presets.forEach(N=>{
+        if(!isFinite(N) || N<=0) return;
+        if(N===3.5){
+          els.label35.textContent='3.5';
+          els.tableWrap35.style.display='';
+          render(els.table35, els.summary35, 3.5);
+        } else if(N===5.5){
+          els.label55.textContent='5.5';
+          els.tableWrap55.style.display='';
+          render(els.table55, els.summary55, 5.5);
+        } else {
+          // custom: 재사용 (tableWrap35에 렌더)
+          els.label35.textContent=String(N);
+          els.tableWrap35.style.display='';
+          els.table35.innerHTML='';
+          els.summary35.innerHTML='';
+          render(els.table35, els.summary35, N);
+        }
+      });
+    }
+
+    document.getElementById('calcBtn').addEventListener('click', calculateZones);
+    // 최초 자동 계산
     calculateZones();
   </script>
 </body>
